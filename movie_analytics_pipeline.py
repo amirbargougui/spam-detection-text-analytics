@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+from itertools import cycle, islice
 from pathlib import Path
 
 import matplotlib.pyplot as plt
@@ -15,21 +16,35 @@ from sklearn.preprocessing import OneHotEncoder
 
 FEATURE_COLUMNS = ["budget", "runtime", "rating", "genre"]
 TARGET_COLUMN = "revenue"
+MIN_BUDGET = 10_000_000
+BUDGET_STEP = 250_000
+BUDGET_CYCLE = 140_000_000
+MIN_RUNTIME = 80
+RUNTIME_STEP = 7
+RUNTIME_CYCLE = 70
+MIN_RATING = 5.0
+RATING_STEP = 0.11
+RATING_CYCLE = 4.8
+BUDGET_MULTIPLIER = 1.45
+RATING_WEIGHT = 12_000_000
+RUNTIME_PENALTY = 120_000
+MODEL_ESTIMATORS = 200
+MODEL_RANDOM_STATE = 42
 
 
-def generate_sample_cinema_data(size: int = 120, random_state: int = 42) -> pd.DataFrame:
+def generate_sample_cinema_data(size: int = 120) -> pd.DataFrame:
     """Generate synthetic cinema data for quick local experimentation."""
-    rng = pd.Series(range(size))
-    budget = 10_000_000 + (rng * 250_000) % 140_000_000
-    runtime = 80 + (rng * 7) % 70
-    rating = 5.0 + (rng * 0.11) % 4.8
+    index_series = pd.Series(range(size))
+    budget = MIN_BUDGET + (index_series * BUDGET_STEP) % BUDGET_CYCLE
+    runtime = MIN_RUNTIME + (index_series * RUNTIME_STEP) % RUNTIME_CYCLE
+    rating = MIN_RATING + (index_series * RATING_STEP) % RATING_CYCLE
     genres = ["Action", "Drama", "Comedy", "Animation", "Thriller"]
-    genre = pd.Series(genres[i % len(genres)] for i in rng)
+    genre = pd.Series(list(islice(cycle(genres), size)))
 
     genre_boost = genre.map(
         {"Action": 55_000_000, "Drama": 25_000_000, "Comedy": 30_000_000, "Animation": 45_000_000, "Thriller": 35_000_000}
     )
-    revenue = (budget * 1.45) + (rating * 12_000_000) + genre_boost - (runtime * 120_000)
+    revenue = (budget * BUDGET_MULTIPLIER) + (rating * RATING_WEIGHT) + genre_boost - (runtime * RUNTIME_PENALTY)
 
     return pd.DataFrame(
         {
@@ -73,7 +88,7 @@ def create_model() -> Pipeline:
     return Pipeline(
         [
             ("preprocessor", preprocessor),
-            ("model", RandomForestRegressor(n_estimators=200, random_state=42)),
+            ("model", RandomForestRegressor(n_estimators=MODEL_ESTIMATORS, random_state=MODEL_RANDOM_STATE)),
         ]
     )
 
