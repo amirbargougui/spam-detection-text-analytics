@@ -147,13 +147,3 @@ python spam_classifier.py
 - Model evaluation using Accuracy, ROC Curve and Confusion Matrix
 - Data visualization with Matplotlib and Seaborn
 
----
-
-## 👨‍💻 Author
-
-**Mohamed Amir Bargougui**
-
-AI & Data Engineering Student
-
-GitHub:
-https://github.com/amirbargougui
